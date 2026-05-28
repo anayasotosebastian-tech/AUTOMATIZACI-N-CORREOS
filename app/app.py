@@ -157,19 +157,58 @@ def build_document(data):
 
 
 def doc_to_pdf(doc, out_path):
-    """Save doc to docx then convert to PDF using LibreOffice."""
+    """Convert Document to PDF. Tries LibreOffice first, falls back to mammoth+weasyprint."""
     tmp_docx = out_path.replace(".pdf", ".docx")
     doc.save(tmp_docx)
-    result = subprocess.run(
-        ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir",
-         os.path.dirname(out_path), tmp_docx],
-        capture_output=True, text=True, timeout=60
-    )
-    # libreoffice names the pdf same as docx
-    expected_pdf = tmp_docx.replace(".docx", ".pdf")
-    if os.path.exists(expected_pdf) and expected_pdf != out_path:
-        os.rename(expected_pdf, out_path)
-    return result.returncode == 0
+
+    # ── Try LibreOffice ───────────────────────────────────────────────────
+    lo_bin = None
+    for candidate in ["libreoffice", "soffice"]:
+        if subprocess.run(["which", candidate], capture_output=True).returncode == 0:
+            lo_bin = candidate
+            break
+
+    if lo_bin:
+        # Some systems need a writable user profile when running as root
+        lo_profile = os.path.join(UPLOADS_DIR, "lo_profile")
+        os.makedirs(lo_profile, exist_ok=True)
+        result = subprocess.run(
+            [lo_bin, "--headless",
+             f"-env:UserInstallation=file://{lo_profile}",
+             "--convert-to", "pdf",
+             "--outdir", os.path.dirname(out_path),
+             tmp_docx],
+            capture_output=True, text=True, timeout=60
+        )
+        expected_pdf = tmp_docx.replace(".docx", ".pdf")
+        if os.path.exists(expected_pdf) and os.path.getsize(expected_pdf) > 0:
+            if expected_pdf != out_path:
+                os.rename(expected_pdf, out_path)
+            return True
+
+    # ── Fallback: mammoth (docx→HTML) + weasyprint (HTML→PDF) ────────────
+    try:
+        import mammoth
+        from weasyprint import HTML, CSS
+
+        with open(tmp_docx, "rb") as f:
+            result = mammoth.convert_to_html(f)
+        html_content = f"""<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"/>
+<style>
+  body {{ font-family: Arial, sans-serif; font-size: 11pt; margin: 2cm; line-height: 1.4; }}
+  table {{ border-collapse: collapse; width: 100%; margin: 1em 0; }}
+  td, th {{ border: 1px solid #999; padding: 5px 8px; font-size: 10pt; }}
+  th {{ background: #2c5f6e; color: white; font-weight: bold; }}
+  p {{ margin: 0.5em 0; }}
+  @page {{ margin: 2cm; }}
+</style>
+</head><body>{result.value}</body></html>"""
+        HTML(string=html_content).write_pdf(out_path)
+        return os.path.exists(out_path) and os.path.getsize(out_path) > 0
+    except Exception:
+        return False
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────

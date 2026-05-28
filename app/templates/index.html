@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Planes de Lealtad – Grupo Farmatodo</title>
+<style>
+  :root {
+    --primary: #005f73;
+    --accent:  #0a9396;
+    --light:   #e9f5f7;
+    --yellow:  #ffd166;
+    --red:     #ef476f;
+    --green:   #06d6a0;
+    --bg:      #f4f8fb;
+    --card:    #ffffff;
+    --border:  #d0e3ea;
+    --text:    #1a2e35;
+    --muted:   #637074;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  header h1 { font-size: 1.3rem; font-weight: 600; }
+  header span { font-size: .85rem; opacity: .75; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0,95,115,.07);
+  }
+  .card-title {
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 1.2rem;
+    padding-bottom: .5rem;
+    border-bottom: 2px solid var(--light);
+  }
+
+  .grid { display: grid; gap: 1rem; }
+  .grid-2 { grid-template-columns: repeat(2,1fr); }
+  .grid-3 { grid-template-columns: repeat(3,1fr); }
+  .grid-4 { grid-template-columns: repeat(4,1fr); }
+  @media(max-width:700px){ .grid-2,.grid-3,.grid-4{ grid-template-columns:1fr; } }
+
+  label { display: block; font-size: .8rem; font-weight: 600; color: var(--muted); margin-bottom: .35rem; }
+  input, select, textarea {
+    width: 100%; padding: .55rem .75rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: .9rem;
+    background: #fff;
+    color: var(--text);
+    transition: border-color .2s;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  input[readonly] { background: var(--light); color: var(--primary); font-weight: 600; }
+
+  .id-lab-wrapper { position: relative; }
+  .id-lab-wrapper input { padding-right: 2.5rem; }
+  #lab-status {
+    position: absolute; right: .65rem; top: 50%; transform: translateY(-50%);
+    font-size: 1.1rem;
+  }
+
+  /* Tabla de productos */
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  thead th {
+    background: var(--primary); color: #fff;
+    padding: .6rem .75rem; text-align: left;
+    font-weight: 600; font-size: .78rem; letter-spacing: .04em;
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(even) { background: var(--light); }
+  tbody td { padding: .45rem .6rem; vertical-align: middle; }
+  tbody td input {
+    border: none; background: transparent; padding: .2rem .3rem;
+    font-size: .85rem; min-width: 60px;
+  }
+  tbody td input:focus { background: #fff; border: 1.5px solid var(--accent); border-radius: 4px; }
+  .td-sap, .td-producto { color: var(--muted); }
+  .not-found { color: var(--red) !important; }
+  .found { color: var(--accent) !important; }
+
+  .btn-row { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem; }
+  .btn {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .6rem 1.2rem; border: none; border-radius: 8px;
+    font-size: .88rem; font-weight: 600; cursor: pointer; transition: all .18s;
+    font-family: inherit;
+  }
+  .btn-primary   { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #004f60; }
+  .btn-accent    { background: var(--accent); color: #fff; }
+  .btn-accent:hover  { background: #087b7e; }
+  .btn-yellow    { background: var(--yellow); color: #333; }
+  .btn-yellow:hover  { background: #ffc233; }
+  .btn-green     { background: var(--green); color: #fff; }
+  .btn-green:hover   { background: #04b589; }
+  .btn-red       { background: var(--red); color: #fff; }
+  .btn-danger    { background: #f8d7da; color: var(--red); border: 1.5px solid var(--red); }
+  .btn-danger:hover  { background: var(--red); color: #fff; }
+  .btn-sm { padding: .35rem .75rem; font-size: .8rem; }
+  .btn:disabled { opacity: .5; cursor: default; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.5); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #fff; border-radius: 14px;
+    width: min(95vw, 900px); max-height: 90vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  }
+  .modal-header {
+    padding: 1rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--primary); color: #fff; border-radius: 14px 14px 0 0;
+  }
+  .modal-header h2 { font-size: 1rem; }
+  .modal-close { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; line-height: 1; }
+  .modal-body { flex: 1; overflow: auto; padding: 1.5rem; }
+  .modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: .75rem;
+  }
+
+  .pdf-frame { width: 100%; height: 60vh; border: 1px solid var(--border); border-radius: 8px; }
+
+  /* Email editor */
+  .email-field { margin-bottom: 1rem; }
+  .email-field label { font-weight: 700; color: var(--primary); margin-bottom: .4rem; display: block; }
+  #email-subject { font-weight: 600; }
+  #email-body { min-height: 160px; resize: vertical; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: var(--primary); color: #fff;
+    padding: .75rem 1.25rem; border-radius: 10px;
+    font-size: .88rem; font-weight: 600;
+    opacity: 0; transition: opacity .3s;
+    z-index: 999; pointer-events: none;
+    max-width: 320px;
+  }
+  #toast.show { opacity: 1; }
+
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,.4);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin .6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .badge {
+    display: inline-block; padding: .2rem .6rem;
+    border-radius: 20px; font-size: .75rem; font-weight: 700;
+    background: var(--light); color: var(--primary);
+  }
+  .badge-renovacion { background: #fff3e0; color: #e65100; }
+  .badge-nuevo { background: #e8f5e9; color: #2e7d32; }
+
+  .sku-paste-area {
+    min-height: 80px; font-family: monospace;
+    resize: vertical;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📋 Planes de Lealtad</h1>
+    <span>Grupo Farmatodo – Generador de Convenios</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── Sección 1: Datos generales ── -->
+  <div class="card">
+    <div class="card-title">1 · Datos generales</div>
+    <div class="grid grid-3">
+      <div>
+        <label>Acción *</label>
+        <select id="accion">
+          <option value="RENOVACION">RENOVACIÓN</option>
+          <option value="NUEVO">NUEVO PLAN</option>
+        </select>
+      </div>
+      <div>
+        <label>Nombre del documento *</label>
+        <input type="text" id="nombre-documento" placeholder="ej. CONVENIO_ULTRA_2026"/>
+      </div>
+      <div>
+        <label>Fecha del documento *</label>
+        <input type="date" id="fecha-doc"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Sección 2: Laboratorio ── -->
+  <div class="card">
+    <div class="card-title">2 · Laboratorio</div>
+    <div class="grid grid-2">
+      <div>
+        <label>ID Laboratorio *</label>
+        <div class="id-lab-wrapper">
+          <input type="text" id="id-lab" placeholder="ej. 1000660" oninput="lookupLab()"/>
+          <span id="lab-status"></span>
+        </div>
+      </div>
+      <div>
+        <label>Nombre del laboratorio</label>
+        <input type="text" id="nombre-lab" readonly placeholder="Se completa automáticamente"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Sección 3: Vigencia y condiciones ── -->
+  <div class="card">
+    <div class="card-title">3 · Vigencia y condiciones</div>
+    <div class="grid grid-3">
+      <div>
+        <label>Inicio de vigencia *</label>
+        <input type="date" id="inicio-vigencia"/>
+      </div>
+      <div>
+        <label>Fin de vigencia *</label>
+        <input type="date" id="fin-vigencia"/>
+      </div>
+      <div>
+        <label>Forma de recuperación *</label>
+        <select id="forma-recuperacion">
+          <option value="OC COSTO 0">OC COSTO 0</option>
+          <option value="FACTURA">FACTURA</option>
+          <option value="NC">NC</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Sección 4: Firmante del laboratorio ── -->
+  <div class="card">
+    <div class="card-title">4 · Firmante del laboratorio</div>
+    <div class="grid grid-2">
+      <div>
+        <label>Nombre del KAM *</label>
+        <input type="text" id="nombre-kam" placeholder="ej. Laura Edith Castellanos"/>
+      </div>
+      <div>
+        <label>Puesto *</label>
+        <input type="text" id="puesto" placeholder="ej. KAM"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Sección 5: Productos ── -->
+  <div class="card">
+    <div class="card-title">5 · Productos (SKU)</div>
+    <div class="grid grid-2" style="margin-bottom:1rem;">
+      <div>
+        <label>Pegar SKUs (uno por línea o separados por coma/espacio)</label>
+        <textarea id="sku-input" class="sku-paste-area" placeholder="7502216792289&#10;7502216796737&#10;7502216796836"></textarea>
+      </div>
+      <div style="display:flex;flex-direction:column;justify-content:flex-end;gap:.6rem;">
+        <button class="btn btn-accent" onclick="lookupSkus()">🔍 Buscar productos</button>
+        <button class="btn btn-danger btn-sm" onclick="clearTable()">🗑 Limpiar tabla</button>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="productos-table">
+        <thead>
+          <tr>
+            <th style="width:36px;">#</th>
+            <th>SAP</th>
+            <th>SKU</th>
+            <th>Producto</th>
+            <th>Mecánica</th>
+            <th>Límites</th>
+            <th style="width:40px;"></th>
+          </tr>
+        </thead>
+        <tbody id="productos-body">
+          <!-- rows inserted by JS -->
+        </tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-sm" onclick="addRow()">＋ Agregar fila</button>
+    </div>
+  </div>
+
+  <!-- ── Sección 6: Correo ── -->
+  <div class="card">
+    <div class="card-title">6 · Correo</div>
+    <div class="grid grid-2">
+      <div>
+        <label>Destinatario (Para:) *</label>
+        <input type="email" id="correo-to" placeholder="kam@laboratorio.com"/>
+      </div>
+      <div>
+        <label>Con copia (CC:)</label>
+        <input type="text" id="correo-cc" placeholder="copia1@lab.com, copia2@lab.com"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Botones de acción ── -->
+  <div class="btn-row">
+    <button class="btn btn-yellow" id="btn-preview" onclick="preview()">
+      👁 Vista previa del convenio
+    </button>
+    <button class="btn btn-green" id="btn-send" onclick="openEmailModal()" disabled>
+      ✉ Preparar correo
+    </button>
+  </div>
+
+</div><!-- /container -->
+
+<!-- ── Modal: Vista previa PDF ── -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Vista previa del convenio</h2>
+      <button class="modal-close" onclick="closeModal('preview-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="preview-content" style="text-align:center;padding:2rem;color:var(--muted);">
+        Generando documento…
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a id="btn-download-pdf" class="btn btn-primary" href="#" download style="display:none;">⬇ Descargar PDF</a>
+      <a id="btn-download-docx" class="btn btn-accent" href="#" download style="display:none;">⬇ Descargar Word</a>
+      <button class="btn btn-green" onclick="approveAndEmail()">✅ Aprobar y preparar correo</button>
+      <button class="btn btn-danger" onclick="closeModal('preview-modal')">✕ Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Correo ── -->
+<div class="modal-overlay" id="email-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>✉ Preparar correo</h2>
+      <button class="modal-close" onclick="closeModal('email-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="email-field">
+        <label>Para:</label>
+        <input type="text" id="email-to"/>
+      </div>
+      <div class="email-field">
+        <label>CC:</label>
+        <input type="text" id="email-cc"/>
+      </div>
+      <div class="email-field">
+        <label>Asunto:</label>
+        <input type="text" id="email-subject"/>
+      </div>
+      <div class="email-field">
+        <label>Cuerpo:</label>
+        <textarea id="email-body"></textarea>
+      </div>
+      <p style="font-size:.8rem;color:var(--muted);margin-top:.5rem;">
+        💡 Puedes editar el texto antes de abrir en tu cliente de correo.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <a id="btn-attach-pdf" class="btn btn-primary" href="#" download style="display:none;">⬇ PDF adjunto</a>
+      <button class="btn btn-green" onclick="openMailto()">📧 Abrir en Outlook / correo</button>
+      <button class="btn btn-danger" onclick="closeModal('email-modal')">✕ Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let lastPdfUrl = null;
+let lastDocxUrl = null;
+let previewApproved = false;
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('fecha-doc').value = today;
+  addRow(); // start with one empty row
+});
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function toast(msg, duration=3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ── Lab lookup ─────────────────────────────────────────────────────────────
+let labTimer = null;
+function lookupLab() {
+  clearTimeout(labTimer);
+  labTimer = setTimeout(async () => {
+    const id = document.getElementById('id-lab').value.trim();
+    const statusEl = document.getElementById('lab-status');
+    const nameEl = document.getElementById('nombre-lab');
+    if (!id) { nameEl.value = ''; statusEl.textContent = ''; return; }
+    const res = await fetch(`/api/lab?id=${encodeURIComponent(id)}`);
+    const data = await res.json();
+    if (data.nombre) {
+      nameEl.value = data.nombre;
+      statusEl.textContent = '✅';
+    } else {
+      nameEl.value = '';
+      statusEl.textContent = '❌';
+    }
+  }, 350);
+}
+
+// ── Producto table ─────────────────────────────────────────────────────────
+let rowCount = 0;
+
+function addRow(sap='-', sku='', producto='-', mecanica='3+1', limites='Sin Límites', found=null) {
+  rowCount++;
+  const tbody = document.getElementById('productos-body');
+  const tr = document.createElement('tr');
+  tr.id = `row-${rowCount}`;
+  const sapClass = found === false ? 'not-found' : found === true ? 'found' : '';
+  tr.innerHTML = `
+    <td style="text-align:center;color:var(--muted);font-size:.8rem;">${rowCount}</td>
+    <td class="td-sap ${sapClass}"><input type="text" value="${esc(sap)}" readonly tabindex="-1"/></td>
+    <td><input type="text" value="${esc(sku)}" oninput="onSkuChange(this,${rowCount})"/></td>
+    <td class="td-producto ${sapClass}"><input type="text" value="${esc(producto)}"/></td>
+    <td><input type="text" value="${esc(mecanica)}" style="width:80px;"/></td>
+    <td><input type="text" value="${esc(limites)}" style="width:110px;"/></td>
+    <td><button class="btn btn-danger btn-sm" onclick="removeRow(${rowCount})" title="Eliminar fila">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  renumberRows();
+}
+
+function esc(s) { return String(s).replace(/"/g,'&quot;'); }
+
+function removeRow(id) {
+  const el = document.getElementById(`row-${id}`);
+  if (el) el.remove();
+  renumberRows();
+}
+
+function renumberRows() {
+  const rows = document.querySelectorAll('#productos-body tr');
+  rows.forEach((tr, i) => { tr.cells[0].textContent = i + 1; });
+}
+
+function clearTable() {
+  document.getElementById('productos-body').innerHTML = '';
+  rowCount = 0;
+  addRow();
+}
+
+function onSkuChange(input, id) {
+  const sku = input.value.trim();
+  if (!sku) return;
+  clearTimeout(input._timer);
+  input._timer = setTimeout(async () => {
+    const res = await fetch('/api/sku', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({skus:[sku]}) });
+    const [entry] = await res.json();
+    const tr = document.getElementById(`row-${id}`);
+    if (!tr) return;
+    const sapInput = tr.querySelectorAll('input')[0];
+    const prodInput = tr.querySelectorAll('input')[2];
+    sapInput.value = entry.sap;
+    prodInput.value = entry.producto;
+    tr.querySelector('.td-sap').className = `td-sap ${entry.found?'found':'not-found'}`;
+    tr.querySelector('.td-producto').className = `td-producto ${entry.found?'found':'not-found'}`;
+  }, 400);
+}
+
+async function lookupSkus() {
+  const raw = document.getElementById('sku-input').value.trim();
+  if (!raw) { toast('Pega al menos un SKU primero.'); return; }
+  const skus = raw.split(/[\n,;\s]+/).map(s=>s.trim()).filter(Boolean);
+  if (!skus.length) return;
+
+  const res = await fetch('/api/sku', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({skus}) });
+  const entries = await res.json();
+
+  // Clear table first
+  document.getElementById('productos-body').innerHTML = '';
+  rowCount = 0;
+
+  // Get default mecanica/limites from first existing row (if any)
+  for (const entry of entries) {
+    addRow(entry.sap, entry.sku, entry.producto, '3+1', 'Sin Límites', entry.found);
+  }
+  const found = entries.filter(e=>e.found).length;
+  toast(`${found} de ${entries.length} SKUs encontrados.`);
+}
+
+// ── Collect form data ──────────────────────────────────────────────────────
+function collectData() {
+  const rows = document.querySelectorAll('#productos-body tr');
+  const productos = [];
+  rows.forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    const sap = inputs[0].value.trim();
+    const sku = inputs[1].value.trim();
+    const producto = inputs[2].value.trim();
+    const mecanica = inputs[3].value.trim();
+    const limites = inputs[4].value.trim();
+    if (sku || sap !== '-') productos.push({sap, sku, producto, mecanica, limites});
+  });
+
+  // Format fecha for display in document (Spanish)
+  const fechaRaw = document.getElementById('fecha-doc').value;
+  const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  let fechaDoc = fechaRaw;
+  if (fechaRaw) {
+    const dt = new Date(fechaRaw + 'T00:00:00');
+    fechaDoc = `${dt.getDate()} de ${months[dt.getMonth()]}, ${dt.getFullYear()}`;
+  }
+
+  return {
+    accion: document.getElementById('accion').value,
+    nombre_documento: document.getElementById('nombre-documento').value,
+    fecha_doc: fechaDoc,
+    fecha_raw: fechaRaw,
+    id_lab: document.getElementById('id-lab').value,
+    nombre_lab: document.getElementById('nombre-lab').value,
+    inicio_vigencia: document.getElementById('inicio-vigencia').value,
+    fin_vigencia: document.getElementById('fin-vigencia').value,
+    forma_recuperacion: document.getElementById('forma-recuperacion').value,
+    nombre_kam: document.getElementById('nombre-kam').value,
+    puesto: document.getElementById('puesto').value,
+    correo_to: document.getElementById('correo-to').value,
+    correo_cc: document.getElementById('correo-cc').value,
+    productos,
+  };
+}
+
+function validate(data) {
+  if (!data.nombre_lab) { toast('⚠ Ingresa un ID de laboratorio válido.'); return false; }
+  if (!data.inicio_vigencia || !data.fin_vigencia) { toast('⚠ Selecciona las fechas de vigencia.'); return false; }
+  if (!data.nombre_kam) { toast('⚠ Ingresa el nombre del KAM.'); return false; }
+  if (data.productos.length === 0) { toast('⚠ Agrega al menos un producto.'); return false; }
+  return true;
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────
+async function preview() {
+  const data = collectData();
+  if (!validate(data)) return;
+
+  const btn = document.getElementById('btn-preview');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generando…';
+
+  openModal('preview-modal');
+  document.getElementById('preview-content').innerHTML = '<p style="color:var(--muted)">⏳ Generando documento, un momento…</p>';
+
+  try {
+    const res = await fetch('/api/preview', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    const result = await res.json();
+
+    const dlPdf = document.getElementById('btn-download-pdf');
+    const dlDocx = document.getElementById('btn-download-docx');
+
+    if (result.ok && result.pdf_url) {
+      lastPdfUrl = result.pdf_url;
+      document.getElementById('preview-content').innerHTML = `<iframe src="${result.pdf_url}" class="pdf-frame"></iframe>`;
+      dlPdf.href = result.pdf_url;
+      dlPdf.style.display = 'inline-flex';
+    } else if (result.docx_url) {
+      lastDocxUrl = result.docx_url;
+      document.getElementById('preview-content').innerHTML = `
+        <div style="padding:2rem;text-align:center;">
+          <p style="margin-bottom:1rem;color:var(--muted);">Vista previa en PDF no disponible (LibreOffice no instalado).<br>Descarga el archivo Word para revisarlo.</p>
+          <a href="${result.docx_url}" class="btn btn-accent" download>⬇ Descargar Word para revisar</a>
+        </div>`;
+      dlDocx.href = result.docx_url;
+      dlDocx.style.display = 'inline-flex';
+    }
+  } catch(e) {
+    document.getElementById('preview-content').innerHTML = '<p style="color:var(--red)">Error al generar el documento.</p>';
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '👁 Vista previa del convenio';
+}
+
+function approveAndEmail() {
+  previewApproved = true;
+  closeModal('preview-modal');
+  document.getElementById('btn-send').disabled = false;
+  openEmailModal();
+}
+
+// ── Email modal ────────────────────────────────────────────────────────────
+async function openEmailModal() {
+  const data = collectData();
+  if (!validate(data)) return;
+
+  const res = await fetch('/api/email_body', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+  const email = await res.json();
+
+  document.getElementById('email-to').value = data.correo_to;
+  document.getElementById('email-cc').value = data.correo_cc;
+  document.getElementById('email-subject').value = email.subject;
+  document.getElementById('email-body').value = email.body;
+
+  if (lastPdfUrl) {
+    const a = document.getElementById('btn-attach-pdf');
+    a.href = lastPdfUrl;
+    a.style.display = 'inline-flex';
+  }
+
+  openModal('email-modal');
+}
+
+function openMailto() {
+  const to = document.getElementById('email-to').value;
+  const cc = document.getElementById('email-cc').value;
+  const subject = encodeURIComponent(document.getElementById('email-subject').value);
+  const body = encodeURIComponent(document.getElementById('email-body').value);
+  let mailto = `mailto:${to}?subject=${subject}&body=${body}`;
+  if (cc) mailto += `&cc=${encodeURIComponent(cc)}`;
+  window.location.href = mailto;
+  toast('✅ Abriendo cliente de correo…');
+}
+
+// ── Modal helpers ──────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('active'); });
+});
+</script>
+</body>
+</html>

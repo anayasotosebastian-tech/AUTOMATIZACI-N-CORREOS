@@ -1,0 +1,91 @@
+:root {
+  --farmatodo-red: #C0392B;
+  --farmatodo-dark: #922B21;
+}
+
+body {
+  background: #f5f6fa;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Navbar */
+.bg-farmatodo { background-color: var(--farmatodo-red) !important; }
+.text-farmatodo { color: var(--farmatodo-red) !important; }
+.btn-farmatodo {
+  background-color: var(--farmatodo-red);
+  border-color: var(--farmatodo-red);
+  color: #fff;
+}
+.btn-farmatodo:hover, .btn-farmatodo:focus {
+  background-color: var(--farmatodo-dark);
+  border-color: var(--farmatodo-dark);
+  color: #fff;
+}
+.spinner-border.text-farmatodo { color: var(--farmatodo-red) !important; }
+.progress-bar.bg-farmatodo { background-color: var(--farmatodo-red) !important; }
+
+/* Step badge */
+.step-badge {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed #ced4da;
+  border-radius: 10px;
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--farmatodo-red);
+  background: #fff5f5;
+}
+.upload-zone.has-file {
+  border-color: #28a745;
+  background: #f0fff4;
+}
+
+/* Cards */
+.card { border: none; border-radius: 12px; }
+.card-header { border-bottom: 1px solid #f0f0f0; border-radius: 12px 12px 0 0 !important; padding: 14px 20px; }
+
+/* Table */
+#resultsTable th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6c757d;
+  border-top: none;
+}
+#resultsTable td { font-size: 0.9rem; }
+.status-badge { font-size: 0.75rem; }
+
+/* Action buttons in table */
+.btn-action { font-size: 0.8rem; padding: 3px 8px; }
+
+/* Sent row highlight */
+tr.row-sent td { background: #f0fff4 !important; }
+
+/* Accordion */
+.accordion-button:not(.collapsed) {
+  color: var(--farmatodo-red);
+  background-color: #fff5f5;
+  box-shadow: none;
+}
+.accordion-button:focus { box-shadow: none; }
+
+/* Modal preview */
+#previewModal .modal-body { background: #525659; }

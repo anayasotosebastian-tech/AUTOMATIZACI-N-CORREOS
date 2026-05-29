@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generador de Cartas – Plan de Lealtad Grupo Farmatodo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link href="/static/css/style.css" rel="stylesheet" />
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-farmatodo shadow-sm">
+  <div class="container-fluid px-4">
+    <span class="navbar-brand fw-bold fs-5">
+      <i class="bi bi-envelope-paper-fill me-2"></i>
+      Plan de Lealtad · Generador de Cartas
+    </span>
+    <span class="text-white-50 small">Grupo Farmatodo / NADRO</span>
+  </div>
+</nav>
+
+<div class="container-xl py-4 px-3 px-md-4">
+
+  <!-- PASO 1: Cargar y configurar -->
+  <div id="step1" class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex align-items-center gap-2">
+      <span class="badge bg-farmatodo rounded-circle step-badge">1</span>
+      <strong>Carga tu archivo y configura el documento</strong>
+    </div>
+    <div class="card-body">
+      <form id="uploadForm" enctype="multipart/form-data">
+
+        <!-- Fila superior -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-5">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-file-earmark-excel-fill text-success me-1"></i>
+              Archivo Excel con productos
+            </label>
+            <div class="upload-zone" id="dropZone">
+              <input type="file" id="excel_file" name="excel_file" accept=".xlsx,.xls" class="d-none" required />
+              <div id="dropMsg">
+                <i class="bi bi-cloud-upload fs-2 text-muted"></i>
+                <p class="mb-0 mt-2 text-muted small">Arrastra tu archivo aquí o <span class="text-primary fw-semibold" style="cursor:pointer" onclick="document.getElementById('excel_file').click()">haz clic para seleccionar</span></p>
+                <p class="text-muted" style="font-size:0.75rem">Solo .xlsx / .xls</p>
+              </div>
+              <div id="fileSelected" class="d-none">
+                <i class="bi bi-file-earmark-check-fill text-success fs-3"></i>
+                <p class="mb-0 fw-semibold text-success" id="fileName"></p>
+                <span class="text-muted small" id="fileSize"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-7">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-semibold">
+                  <i class="bi bi-file-text me-1"></i>
+                  Nombre del documento
+                </label>
+                <input type="text" name="doc_name" id="doc_name" class="form-control"
+                       placeholder="Ej: RENOVACION_PLAN_LEALTAD_JUN26"
+                       value="RENOVACION_PLAN_LEALTAD" required />
+                <div class="form-text">Se usará como prefijo del nombre de los archivos generados.</div>
+              </div>
+
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">
+                  <i class="bi bi-calendar3 me-1"></i>
+                  Fecha del documento
+                </label>
+                <input type="date" name="doc_date" id="doc_date" class="form-control" required />
+              </div>
+
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">
+                  <i class="bi bi-arrow-repeat me-1"></i>
+                  Forma de recuperación
+                </label>
+                <select name="forma_recuperacion" id="forma_recuperacion" class="form-select">
+                  <option value="OC" selected>OC – Orden de Compra</option>
+                  <option value="Costo 0">Costo 0</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuración SMTP (colapsable) -->
+        <div class="accordion accordion-flush mb-3" id="smtpAccordion">
+          <div class="accordion-item border rounded">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2 px-3" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#smtpPanel">
+                <i class="bi bi-gear me-2"></i>
+                Configuración de correo (SMTP) — requerido para enviar
+              </button>
+            </h2>
+            <div id="smtpPanel" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="row g-3">
+                  <div class="col-sm-6">
+                    <label class="form-label">Servidor SMTP</label>
+                    <input type="text" id="smtp_host" class="form-control" placeholder="smtp.gmail.com" value="smtp.gmail.com" />
+                  </div>
+                  <div class="col-sm-2">
+                    <label class="form-label">Puerto</label>
+                    <input type="number" id="smtp_port" class="form-control" value="587" />
+                  </div>
+                  <div class="col-sm-4">
+                    <label class="form-label">Correo remitente</label>
+                    <input type="email" id="smtp_from" class="form-control" placeholder="tu@correo.com" />
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="form-label">Usuario</label>
+                    <input type="text" id="smtp_user" class="form-control" placeholder="usuario@gmail.com" />
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="form-label">Contraseña / App Password</label>
+                    <div class="input-group">
+                      <input type="password" id="smtp_pass" class="form-control" placeholder="••••••••••••" />
+                      <button class="btn btn-outline-secondary" type="button" onclick="togglePass()">
+                        <i class="bi bi-eye" id="eyeIcon"></i>
+                      </button>
+                    </div>
+                    <div class="form-text">Para Gmail usa una <a href="https://myaccount.google.com/apppasswords" target="_blank">contraseña de aplicación</a>.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-farmatodo btn-lg px-4" id="processBtn">
+            <i class="bi bi-play-circle me-2"></i>Generar Cartas
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-lg" onclick="resetForm()">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Reiniciar
+          </button>
+        </div>
+      </form>
+
+      <!-- Loading -->
+      <div id="loadingPanel" class="d-none text-center py-4">
+        <div class="spinner-border text-farmatodo mb-3" style="width:3rem;height:3rem"></div>
+        <p class="fw-semibold mb-1">Generando cartas...</p>
+        <p class="text-muted small" id="loadingMsg">Leyendo Excel y creando documentos Word</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 2: Resultados -->
+  <div id="step2" class="d-none">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-farmatodo rounded-circle step-badge">2</span>
+          <strong>Documentos generados</strong>
+          <span class="badge bg-success" id="labCount"></span>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-primary btn-sm" onclick="downloadAll()">
+            <i class="bi bi-download me-1"></i>Descargar todo (ZIP)
+          </button>
+          <button class="btn btn-farmatodo btn-sm" data-bs-toggle="modal" data-bs-target="#sendAllModal">
+            <i class="bi bi-send me-1"></i>Enviar todos los correos
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" id="resultsTable">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Laboratorio</th>
+                <th>KAM</th>
+                <th>Correo</th>
+                <th class="text-center">Prods.</th>
+                <th class="text-center">Descargar</th>
+                <th class="text-center">Vista previa</th>
+                <th class="text-center">Correo</th>
+                <th class="text-center pe-3">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-info d-flex align-items-center gap-2" id="pdfWarning" style="display:none!important">
+      <i class="bi bi-info-circle-fill"></i>
+      <span>La conversión a PDF requiere LibreOffice instalado. Los archivos Word (.docx) están disponibles.
+      <a href="https://www.libreoffice.org/" target="_blank">Instalar LibreOffice</a> para habilitar PDF.</span>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- Modal: Vista Previa PDF -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-eye me-2"></i><span id="previewTitle">Vista previa</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0" style="height:80vh">
+        <iframe id="previewFrame" src="" style="width:100%;height:100%;border:none"></iframe>
+        <div id="previewNoPdf" class="d-none text-center p-5">
+          <i class="bi bi-file-word text-primary" style="font-size:4rem"></i>
+          <p class="mt-3 text-muted">La vista previa en PDF no está disponible. Descarga el archivo Word para verlo.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a id="previewDownload" href="#" class="btn btn-farmatodo btn-sm" download>
+          <i class="bi bi-download me-1"></i>Descargar
+        </a>
+        <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Enviar correo individual -->
+<div class="modal fade" id="emailModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-envelope me-2"></i>Enviar correo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-light border mb-3" id="emailPreview">
+          <p class="mb-1"><strong>Para:</strong> <span id="emailTo"></span></p>
+          <p class="mb-1"><strong>CC:</strong> <span id="emailCc"></span></p>
+          <p class="mb-0"><strong>Asunto:</strong> <span id="emailSubject"></span></p>
+        </div>
+        <div class="alert alert-warning d-flex gap-2 align-items-start" id="smtpWarning">
+          <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+          <span>Configura los datos SMTP en la sección de configuración antes de enviar.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-farmatodo" id="confirmSendBtn" onclick="confirmSendEmail()">
+          <i class="bi bi-send me-1"></i>Enviar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Enviar todos -->
+<div class="modal fade" id="sendAllModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-send-check me-2"></i>Enviar todos los correos</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Se enviará <strong>un correo único por laboratorio</strong> con su carta adjunta en Word y PDF.</p>
+        <div class="alert alert-warning d-flex gap-2 align-items-start" id="smtpWarningAll">
+          <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+          <span>Verifica que los datos SMTP estén configurados correctamente.</span>
+        </div>
+        <div id="sendAllProgress" class="d-none">
+          <div class="progress mb-2">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-farmatodo"
+                 id="sendProgressBar" style="width:0%"></div>
+          </div>
+          <p class="text-muted small" id="sendProgressMsg">Enviando...</p>
+        </div>
+        <div id="sendAllResults" class="d-none">
+          <div id="sendSuccessList"></div>
+          <div id="sendErrorList"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal" id="sendAllCancel">Cancelar</button>
+        <button class="btn btn-farmatodo" id="sendAllBtn" onclick="sendAllEmails()">
+          <i class="bi bi-send me-1"></i>Enviar todo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100">
+  <div id="liveToast" class="toast" role="alert">
+    <div class="toast-header">
+      <i class="bi bi-bell-fill me-2" id="toastIcon"></i>
+      <strong class="me-auto" id="toastTitle">Notificación</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="toastMsg"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
